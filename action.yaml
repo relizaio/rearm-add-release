@@ -1,0 +1,153 @@
+name: 'Rearm submit metadata'
+description: 'Submit Release metadata for a release on Rearm'
+branding:
+  icon: 'info'
+  color: 'green'
+inputs:
+  rearm_api_id:
+    description: "Rearm Hub API ID"
+    required: true
+  rearm_api_key:
+    description: "Rearm Hub API KEY"
+    required: true
+  image_full_name:
+    description: "Full name of the Docker image with registry prefix"
+    required: true
+  image_digest:
+    description: "SHA 256 digest of the image artifact"
+    required: true
+  rearm_build_start:
+    description: "Build start time"
+    required: true
+  rearm_full_version:
+    description: "Version obtained from Rearm for this release"
+    required: true
+  rearm_build_status:
+    description: "Build status - [complete | rejected]"
+    required: true
+  rearm_api_url:
+    description: "Rearm Hub API URL"
+    required: false
+    default: 'https://dev.rearmhq.com'
+  artifact_type:
+    description: "Type of artifact created by this release [Docker, File]"
+    required: false
+    default: 'Docker'
+  commit_list:
+    description: "List of commits"
+    required: false
+  rearm_project_id:
+    description: "Project UUID for this release if org-wide key is used"
+    required: false
+  enable_sbom:
+    required: false
+    default: 'false'
+    description: Generates SBOM and stores it along with the artifact
+  registry_username:
+    description: "Username for image registry"
+    required: false
+  registry_password:
+    description: "Password for image registry"
+    required: false
+  registry_host:
+    description: "Host for image registry"
+    default: null
+    required: false
+  path:
+    description: "Path to the relative to root of the repo (default is '.')"
+    required: false
+    default: .
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 200
+    - name: Instantiate Rearm status
+      shell: bash
+      run: |
+        cd ${{ inputs.path }}
+        echo "--status ${{inputs.rearm_build_status}} " > rearm_command
+    - id: setup-node-js
+      if: ${{ inputs.enable_sbom == 'true' }}
+      name: Setup Node JS
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      if: ${{ inputs.enable_sbom == 'true' && inputs.registry_host == null }}
+      with:
+        username: ${{inputs.registry_username}}
+        password: ${{inputs.registry_password}}
+    - name: Login to Docker Registry
+      uses: docker/login-action@v3
+      if: ${{ inputs.enable_sbom == 'true' && inputs.registry_host != null }}
+      with:
+        registry: ${{inputs.registry_host}}
+        username: ${{inputs.registry_username}}
+        password: ${{inputs.registry_password}}
+    - id: docker-pull-save
+      name: Pull and Save Docker Image as tar
+      shell: bash
+      if: ${{ inputs.enable_sbom == 'true' }}
+      run: |
+        cd ${{ inputs.path }}
+
+        docker pull ${{inputs.image_full_name}}@${{inputs.image_digest}}
+        docker save -o image_clone_${{ inputs.rearm_full_version }}.tar ${{inputs.image_full_name}}@${{inputs.image_digest}} 
+    - id: install-cdxgen
+      if: ${{ inputs.enable_sbom == 'true' }}
+      name: Install cdxgen cli
+      shell: bash
+      run: npm install -g @cyclonedx/cdxgen@10.8.0
+    - name: Submit metadata to Rearm
+      shell: bash
+      run: |
+        cd ${{ inputs.path }}
+        # Generate SBOMs if Enabled
+        if [[ ${{inputs.enable_sbom}} == 'true' ]]
+        then
+          cdxgen ./ --project-version ${{ inputs.rearm_full_version }} -o fs.cdx.bom.json
+          cdxgen image_clone_${{ inputs.rearm_full_version }}.tar -t docker --project-version ${{ inputs.rearm_full_version }} -o docker.cdx.bom.json
+          echo -n "--artboms container:docker.cdx.bom.json " >> rearm_command
+          echo -n "--fsbom fs.cdx.bom.json " >> rearm_command
+        fi
+        echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
+          -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
+          -v ${{ inputs.rearm_full_version }} " >> rearm_command
+        echo -n "--artid ${{inputs.image_full_name}} " >> rearm_command
+        echo -n "--artbuildid github${{github.action}}${{github.sha}} " >> rearm_command
+        echo -n "--artbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> rearm_command
+        echo -n "--artcimeta GitHub Actions " >> rearm_command
+        echo -n "--arttype ${{inputs.artifact_type}} " >> rearm_command
+        if [[ ${{inputs.image_digest}} != "" ]]
+        then
+          echo -n "--artdigests ${{inputs.image_digest}} " >> rearm_command
+        fi
+        if [ ! -z ${{inputs.commit_list}} ]
+        then
+          echo -n "--commits ${{inputs.commit_list}} " >> rearm_command
+        fi
+        if [ ! -z ${{inputs.rearm_project_id}} ]
+        then
+          echo -n "--project ${{inputs.rearm_project_id}} " >> rearm_command
+        fi
+        echo -n "--datestart ${{inputs.rearm_build_start}} " >> rearm_command
+        echo -n "--dateend $(date -Iseconds) " >> rearm_command
+        # debug
+        cat rearm_command
+        # send data
+        echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
+        eval $(cat rlz_cmd_exec)
+    - name: Fail build if rearm status is rejected
+      shell: bash
+      run: |
+        cd ${{ inputs.path }}
+        status_complete_check=$(cat rearm_command | grep 'status complete' | wc -l)
+        if [[ "$status_complete_check" != "1" ]]
+        then
+          echo "Failing build since Rearm build Status is rejected"
+          exit 1
+        fi
