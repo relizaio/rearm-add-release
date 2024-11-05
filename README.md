@@ -1,8 +1,8 @@
 # `rearm-add-release`
 
 ## About
-This action, uses the Rearm CLI, [`rearm`](https://github.com/rearmio/rearm), to submit the release metadata.
-This action should always be used after the [`rearm-get-version`](https://github.com/rearmio/rearm-get-version) action.
+This action, uses the Rearm CLI, [`rearm`](https://github.com/relizaio/rearm), to submit the release metadata.
+This action should always be used after the [`rearm-get-version`](https://github.com/relizaio/rearm-get-version) action.
 
 ## Usage
 
@@ -10,7 +10,7 @@ Submit Release metadata:
 
 ```yaml
 steps:
-- uses: rearmio/rearm-add-release@1.2
+- uses: relizaio/rearm-add-release@1.2
   with:
     rearm_api_id: <api-id-obtained-from-rearmhub>
     rearm_api_key: <api-key-obtained-from-rearmhub>

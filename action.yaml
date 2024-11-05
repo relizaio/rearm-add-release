@@ -109,22 +109,21 @@ runs:
         # Generate SBOMs if Enabled
         if [[ ${{inputs.enable_sbom}} == 'true' ]]
         then
-          cdxgen ./ --project-version ${{ inputs.rearm_full_version }} -o fs.cdx.bom.json
           cdxgen image_clone_${{ inputs.rearm_full_version }}.tar -t docker --project-version ${{ inputs.rearm_full_version }} -o docker.cdx.bom.json
-          echo -n "--artboms container:docker.cdx.bom.json " >> rearm_command
-          echo -n "--fsbom fs.cdx.bom.json " >> rearm_command
+          echo -n "--dilartsjson '[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./docker.cdx.bom.json"}]'" >> rearm_command
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
           -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
           -v ${{ inputs.rearm_full_version }} " >> rearm_command
-        echo -n "--artid ${{inputs.image_full_name}} " >> rearm_command
-        echo -n "--artbuildid github${{github.action}}${{github.sha}} " >> rearm_command
-        echo -n "--artbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> rearm_command
-        echo -n "--artcimeta GitHub Actions " >> rearm_command
-        echo -n "--arttype ${{inputs.artifact_type}} " >> rearm_command
+        echo -n "--dilid ${{inputs.image_full_name}} " >> rearm_command
+        echo -n "--dilbuildid github${{github.action}}${{github.sha}} " >> rearm_command
+        echo -n "--dilbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> rearm_command
+        echo -n "--dilcimeta GitHub Actions " >> rearm_command
+        echo -n "--diltype ${{inputs.artifact_type}} " >> rearm_command
+
         if [[ ${{inputs.image_digest}} != "" ]]
         then
-          echo -n "--artdigests ${{inputs.image_digest}} " >> rearm_command
+          echo -n "--dildigests ${{inputs.image_digest}} " >> rearm_command
         fi
         if [ ! -z ${{inputs.commit_list}} ]
         then
@@ -132,7 +131,7 @@ runs:
         fi
         if [ ! -z ${{inputs.rearm_project_id}} ]
         then
-          echo -n "--project ${{inputs.rearm_project_id}} " >> rearm_command
+          echo -n "--component ${{inputs.rearm_project_id}} " >> rearm_command
         fi
         echo -n "--datestart ${{inputs.rearm_build_start}} " >> rearm_command
         echo -n "--dateend $(date -Iseconds) " >> rearm_command
