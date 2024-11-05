@@ -110,7 +110,7 @@ runs:
         if [[ ${{inputs.enable_sbom}} == 'true' ]]
         then
           cdxgen image_clone_${{ inputs.rearm_full_version }}.tar -t docker --project-version ${{ inputs.rearm_full_version }} -o docker.cdx.bom.json
-          echo -n "--dilartsjson '[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./docker.cdx.bom.json"}]'" >> rearm_command
+          echo -n "--dilartsjson '[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./docker.cdx.bom.json"}]' " >> rearm_command
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
           -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
