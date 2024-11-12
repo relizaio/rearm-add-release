@@ -68,7 +68,7 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.path }}
-        echo "--status ${{inputs.rearm_build_status}} " > rearm_command
+        echo "--lifecycle ${{inputs.rearm_build_status}} " > rearm_command
     - id: setup-node-js
       if: ${{ inputs.enable_sbom == 'true' }}
       name: Setup Node JS
