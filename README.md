@@ -32,7 +32,7 @@ The actions supports the following inputs:
 - `rearm_full_version`: Version obtained from Rearm for this release
 - `rearm_build_start`: Build start time
 - `rearm_build_status`: Build status - `complete` - if build succeded,  `rejected` - if build failed
-- `artifact_type`: Type of artifact created by this release [Docker, File] (Optional)
+- `deliverable_type`: Type of artifact created by this release [Docker, File] (Optional)
 - `commit_list`: List of commits (Optional)
 - `enable_sbom`: Enables SBOM generation using cdxgen (Optional)
 - `registry_username`: Username for the image registry. (Optional - needed for sbom generation)

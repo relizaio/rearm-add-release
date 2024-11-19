@@ -29,10 +29,10 @@ inputs:
     description: "Rearm Hub API URL"
     required: false
     default: 'https://dev.rearmhq.com'
-  artifact_type:
-    description: "Type of artifact created by this release [Docker, File]"
+  deliverable_type:
+    description: "Type of artifact created by this release [CONTAINER, File]"
     required: false
-    default: 'Docker'
+    default: 'CONTAINER'
   commit_list:
     description: "List of commits"
     required: false
@@ -121,7 +121,7 @@ runs:
         echo -n "--dilbuildid github${{github.action}}${{github.sha}} " >> rearm_command
         echo -n "--dilbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> rearm_command
         echo -n "--dilcimeta GitHub Actions " >> rearm_command
-        echo -n "--diltype ${{inputs.artifact_type}} " >> rearm_command
+        echo -n "--diltype ${{inputs.deliverable_type}} " >> rearm_command
 
         if [[ ${{inputs.image_digest}} != "" ]]
         then
