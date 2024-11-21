@@ -57,6 +57,14 @@ inputs:
     description: "Path to the relative to root of the repo (default is '.')"
     required: false
     default: .
+  send_sce_data:
+    description: "Sends Source Code entry data along with the release"
+    required: false
+    default: 'false'
+  last_commit: 
+    description: "Last registered commit"
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -69,6 +77,18 @@ runs:
       run: |
         cd ${{ inputs.path }}
         echo "--lifecycle ${{inputs.rearm_build_status}} " > rearm_command
+    - name: Set sce data
+      shell: bash
+      if: ${{ inputs.send_sce_data == 'true' }}
+      run: |
+        if [[ -n ${{inputs.last_commit}} ]]
+        then
+          echo -n "--commits $(git log ${{inputs.last_commit}}..${{github.sha}} --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
+        fi
+        echo -n "--commit ${{github.sha}} \
+          --commitmessage \"$(git log -1 --pretty='%s')\" \
+          --date $(git log -1 --date=iso-strict --pretty='%ad') \
+          --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
     - id: setup-node-js
       if: ${{ inputs.enable_sbom == 'true' }}
       name: Setup Node JS
