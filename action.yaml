@@ -115,7 +115,7 @@ runs:
       shell: bash
       if: ${{ inputs.send_sce_data == 'true' }}
       run: |
-        if [[ -n "${{inputs.last_commit}}" ]]
+        if [ ! -z "${{inputs.last_commit}}" ] && [ "null" != "${{inputs.last_commit}}" ]
         then
           echo -n "--commits $(git log ${{inputs.last_commit}}..${{github.sha}} --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
         fi
