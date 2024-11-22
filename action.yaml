@@ -36,8 +36,8 @@ inputs:
   commit_list:
     description: "List of commits"
     required: false
-  rearm_project_id:
-    description: "Project UUID for this release if org-wide key is used"
+  rearm_component_id:
+    description: "Component UUID for this release if org-wide key is used"
     required: false
   enable_sbom:
     required: false
@@ -152,9 +152,9 @@ runs:
         then
           echo -n "--commits ${{inputs.commit_list}} " >> rearm_command
         fi
-        if [ ! -z ${{inputs.rearm_project_id}} ]
+        if [ ! -z ${{inputs.rearm_component_id}} ]
         then
-          echo -n "--component ${{inputs.rearm_project_id}} " >> rearm_command
+          echo -n "--component ${{inputs.rearm_component_id}} " >> rearm_command
         fi
         echo -n "--datestart ${{inputs.rearm_build_start}} " >> rearm_command
         echo -n "--dateend $(date -Iseconds) " >> rearm_command

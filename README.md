@@ -24,8 +24,8 @@ steps:
 ## Inputs
 The actions supports the following inputs:
 
-- `rearm_api_id`: The project API ID obtained from Rearm.
-- `rearm_api_key`: The project API Key obtained from Rearm.
+- `rearm_api_id`: The component API ID obtained from Rearm.
+- `rearm_api_key`: The component API Key obtained from Rearm.
 - `image_full_name`: Full name of the Docker image with registry prefix
 - `image_name`: Name of the image
 - `image_digest`: SHA 256 digest of the image artifact
