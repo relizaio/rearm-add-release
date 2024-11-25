@@ -76,7 +76,8 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.path }}
-        echo "--lifecycle ${{inputs.rearm_build_status}} " > rearm_command
+        echo "" > rearm_command
+        echo "--lifecycle ${{inputs.rearm_build_status}} " >> rearm_command
 
     - id: setup-node-js
       if: ${{ inputs.enable_sbom == 'true' }}
@@ -141,7 +142,7 @@ runs:
         echo -n "--odelid ${{inputs.image_full_name}} " >> rearm_command
         echo -n "--odelbuildid github${{github.action}}${{github.sha}} " >> rearm_command
         echo -n "--odelbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> rearm_command
-        echo -n "--odelcimeta GitHub Actions " >> rearm_command
+        echo -n '--odelcimeta "GitHub Actions" ' >> rearm_command
         echo -n "--odeltype ${{inputs.deliverable_type}} " >> rearm_command
 
         if [[ ${{inputs.image_digest}} != "" ]]
