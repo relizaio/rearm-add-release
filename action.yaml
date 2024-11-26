@@ -136,6 +136,7 @@ runs:
         if [[ ${{inputs.source_code_sbom_type}} == 'npm' ]]
         then
           npm install --global @cyclonedx/cyclonedx-npm
+          npm install
           cyclonedx-npm > fs.cdx.bom.json
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         elif [[ ${{inputs.source_code_sbom_type}} == 'other' ]]
