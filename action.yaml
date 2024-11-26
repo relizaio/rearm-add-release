@@ -43,6 +43,10 @@ inputs:
     required: false
     default: 'false'
     description: Generates SBOM and stores it along with the artifact
+  source_code_sbom_type:
+    required: false
+    default: 'none'
+    description: Generates SBOM based on source code analysis, possible values: npm, other, none
   registry_username:
     description: "Username for image registry"
     required: false
@@ -129,12 +133,21 @@ runs:
       run: |
         cd ${{ inputs.path }}
         # Generate SBOMs if Enabled
-        if [[ ${{inputs.enable_sbom}} == 'true' ]]
+        if [[ ${{inputs.source_code_sbom_type}} == 'npm' ]]
+        then
+          npm install --global @cyclonedx/cyclonedx-npm
+          cyclonedx-npm > fs.cdx.bom.json
+          echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
+        elif [[ ${{inputs.source_code_sbom_type}} == 'other' ]]
         then
           cdxgen ./ --project-version ${{ inputs.rearm_full_version }} -o fs.cdx.bom.json
+          echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
+        fi
+        
+        if [[ ${{inputs.enable_sbom}} == 'true' ]]
+        then
           cdxgen ${{inputs.image_digest}}_clone_${{ inputs.rearm_full_version }}.tar -t docker --project-version ${{ inputs.rearm_full_version }} -o docker.cdx.bom.json
           echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
-          echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
           -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
