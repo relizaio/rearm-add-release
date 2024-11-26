@@ -42,11 +42,11 @@ inputs:
   enable_sbom:
     required: false
     default: 'false'
-    description: Generates SBOM and stores it along with the artifact
+    description: "Generates SBOM and stores it along with the artifact"
   source_code_sbom_type:
     required: false
     default: 'none'
-    description: Generates SBOM based on source code analysis, possible values: npm, other, none
+    description: "Generates SBOM based on source code analysis, possible values: npm, other, none"
   registry_username:
     description: "Username for image registry"
     required: false
