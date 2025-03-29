@@ -105,7 +105,7 @@ runs:
     - id: docker-pull-save
       name: Pull and Save Docker Image as tar
       shell: bash
-      if: ${{ inputs.enable_sbom == 'true' && deliverable_type == 'CONTAINER' }}
+      if: ${{ inputs.enable_sbom == 'true' && inputs.deliverable_type == 'CONTAINER' }}
       run: |
         cd ${{ inputs.path }}
         docker pull ${{inputs.image_full_name}}@${{inputs.image_digest}}
@@ -149,7 +149,7 @@ runs:
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         fi
         
-        if [[ ${{inputs.enable_sbom}} == 'true' && deliverable_type == 'CONTAINER' ]]
+        if [[ ${{inputs.enable_sbom}} == 'true' && inputs.deliverable_type == 'CONTAINER' ]]
         then
           cdxgen ${{inputs.image_digest}}_clone_${{ inputs.rearm_full_version }}.tar -t docker --project-version ${{ inputs.rearm_full_version }} -o docker.cdx.bom.json
           echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
