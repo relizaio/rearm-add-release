@@ -124,10 +124,12 @@ runs:
         then
           echo -n "--commits $(git log ${{inputs.last_commit}}..${{github.sha}} --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
         fi
+        echo "Setting SCE Data"
         echo -n "--commit ${{github.sha}} \
           --commitmessage \"$(git log -1 --pretty='%s')\" \
           --date $(git log -1 --date=iso-strict --pretty='%ad') \
           --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
+        cat rearm_command
     - name: Submit metadata to Rearm
       shell: bash
       run: |
