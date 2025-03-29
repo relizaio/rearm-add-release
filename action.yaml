@@ -62,9 +62,9 @@ inputs:
     required: false
     default: .
   send_sce_data:
-    description: "Sends Source Code entry data along with the release"
+    description: "Sends Source Code entry data along with the release, required for SCE SBOMs"
     required: false
-    default: 'false'
+    default: 'true'
   last_commit: 
     description: "Last registered commit"
     required: false
