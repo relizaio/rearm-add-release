@@ -19,6 +19,9 @@ inputs:
   rearm_build_start:
     description: "Build start time"
     required: true
+  rearm_short_version:
+    description: "Docker and filesystem safe version from Rearm for this release"
+    required: true
   rearm_full_version:
     description: "Version obtained from Rearm for this release"
     required: true
@@ -109,7 +112,7 @@ runs:
       run: |
         cd ${{ inputs.path }}
         docker pull ${{inputs.image_full_name}}@${{inputs.image_digest}}
-        docker save -o ${{inputs.image_digest}}_clone_${{ inputs.rearm_full_version }}.tar ${{inputs.image_full_name}}@${{inputs.image_digest}} 
+        docker save -o ${{inputs.image_digest}}_clone_${{ inputs.rearm_short_version }}.tar ${{inputs.image_full_name}}@${{inputs.image_digest}} 
     - id: install-cdxgen
       if: ${{ inputs.enable_sbom == 'true' }}
       name: Install cdxgen cli
@@ -141,22 +144,22 @@ runs:
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'helm' ]]
         then
-          cdxgen ./ --project-version ${{ inputs.rearm_full_version }} -t helm -o fs.cdx.bom.json
+          cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -t helm -o fs.cdx.bom.json
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'other' ]]
         then
-          cdxgen ./ --project-version ${{ inputs.rearm_full_version }} -o fs.cdx.bom.json
+          cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -o fs.cdx.bom.json
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         fi
         
         if [[ ${{inputs.enable_sbom}} == 'true' && inputs.deliverable_type == 'CONTAINER' ]]
         then
-          cdxgen ${{inputs.image_digest}}_clone_${{ inputs.rearm_full_version }}.tar -t docker --project-version ${{ inputs.rearm_full_version }} -o docker.cdx.bom.json
+          cdxgen ${{inputs.image_digest}}_clone_${{ inputs.rearm_short_version }}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
           echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
           -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
-          -v ${{ inputs.rearm_full_version }} " >> rearm_command
+          -v \"${{ inputs.rearm_full_version }}\" " >> rearm_command
         echo -n "--odelid ${{inputs.image_full_name}} " >> rearm_command
         echo -n "--odelbuildid github${{github.action}}${{github.sha}} " >> rearm_command
         echo -n "--odelbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> rearm_command
