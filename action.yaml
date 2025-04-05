@@ -141,20 +141,24 @@ runs:
           npm install --global @cyclonedx/cyclonedx-npm
           npm install
           cyclonedx-npm > fs.cdx.bom.json
+          du -h ./fs.cdx.bom.json
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'helm' ]]
         then
           cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -t helm -o fs.cdx.bom.json
+          du -h ./fs.cdx.bom.json
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'other' ]]
         then
           cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -o fs.cdx.bom.json
+          du -h ./fs.cdx.bom.json
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         fi
         
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.deliverable_type}} == 'CONTAINER' ]]
         then
           cdxgen ${{inputs.image_digest}}_clone_${{ inputs.rearm_short_version }}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
+          du -h ./docker.cdx.bom.json
           echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
