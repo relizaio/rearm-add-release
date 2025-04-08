@@ -1,7 +1,7 @@
 # `rearm-add-release`
 
 ## About
-This action, uses the Rearm CLI, [`rearm`](https://github.com/relizaio/rearm), to submit the release metadata.
+This action, uses the [Rearm CLI](https://github.com/relizaio/rearm-cli) to submit the release and xBOM metadata to a [ReARM](https://github.com/relizaio/rearm) instance.
 This action should always be used after the [`rearm-get-version`](https://github.com/relizaio/rearm-get-version) action.
 
 ## Usage
