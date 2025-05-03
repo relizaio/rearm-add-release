@@ -150,6 +150,7 @@ runs:
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'other' ]]
         then
+          export FETCH_LICENSE=true
           cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -o fs.cdx.bom.json
           du -h ./fs.cdx.bom.json
           echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
