@@ -117,7 +117,7 @@ runs:
       if: ${{ inputs.enable_sbom == 'true' }}
       name: Install cdxgen cli
       shell: bash
-      run: npm install -g @cyclonedx/cdxgen@10.8.0
+      run: npm install -g @cyclonedx/cdxgen@11.2.7
     - name: Set sce data
       shell: bash
       if: ${{ inputs.send_sce_data == 'true' }}
