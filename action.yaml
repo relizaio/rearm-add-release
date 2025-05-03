@@ -186,14 +186,14 @@ runs:
         # send data
         echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
         eval $(cat rlz_cmd_exec)
+        echo "completed sending release metadata"
     - name: Fail build if rearm status is rejected
       shell: bash
       run: |
+        echo "checking build status..."
         cd ${{ inputs.path }}
-        status_complete_check=$(cat rearm_command | grep 'lifecycle DRAFT' | wc -l)
-        status_complete_check_assembled=$(cat rearm_command | grep 'lifecycle ASSEMBLED' | wc -l)
-        if [[ "$status_complete_check" != "1" ]] &&  [[ "$status_complete_check_assembled" != "1" ]]
+        if [[ "${{inputs.rearm_build_status}}" == "REJECTED" ]]
         then
-          echo "Failing build since Rearm build Status is rejected"
+          echo "Failing build since Rearm build Lifecycle is rejected"
           exit 1
         fi
