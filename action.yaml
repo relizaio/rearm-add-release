@@ -158,7 +158,9 @@ runs:
         
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.deliverable_type}} == 'CONTAINER' ]]
         then
-          cdxgen ${{inputs.image_digest}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
+          cdxgen ${{inputs.image_digest}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json > cdxgen.docker.out 2>&1
+          cat cdxgen.docker.out
+          ls
           du -h ./docker.cdx.bom.json
           echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
         fi
