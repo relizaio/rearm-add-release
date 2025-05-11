@@ -158,13 +158,11 @@ runs:
         
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.deliverable_type}} == 'CONTAINER' ]]
         then
-          export FETCH_LICENSE=true
-          export CDXGEN_DEBUG_MODE=debug
-          cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
+          # export FETCH_LICENSE=true
+          # export CDXGEN_DEBUG_MODE=debug
+          # cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
+          docker run --rm -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen@sha256:a586408a729ec186e747d54415a787c095b2ff19640f29c0d1788ec4f9fea482 /app/docker-${{inputs.rearm_short_version}}.tar -t docker -o /app/docker.cdx.bom.json
           ls
-          df -h
-          du -sh /tmp
-          ls -l /tmp/
           du -h ./docker.cdx.bom.json
           echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
         fi
