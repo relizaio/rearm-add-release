@@ -124,7 +124,7 @@ runs:
     - id: cosign-sign
       name: Sign with cosign
       shell: bash
-      run: cosign sign ${{inputs.image_full_name}}@${{inputs.image_digest}}
+      run: cosign sign -y ${{inputs.image_full_name}}@${{inputs.image_digest}}
     - name: Set sce data
       shell: bash
       if: ${{ inputs.send_sce_data == 'true' }}
