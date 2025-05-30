@@ -118,6 +118,15 @@ runs:
       name: Install cdxgen cli
       shell: bash
       run: npm install -g @cyclonedx/cdxgen@11.2.7
+    - id: install-cosign
+      name: Install Cosign
+      uses: sigstore/cosign-installer@v3.8.2
+    - id: cosign-sign
+      name: Sign with cosign
+      permissions:
+        id-token: write
+      shell: bash
+      run: cosign sign ${{inputs.image_full_name}}@${{inputs.image_digest}}
     - name: Set sce data
       shell: bash
       if: ${{ inputs.send_sce_data == 'true' }}
@@ -191,6 +200,7 @@ runs:
         echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
         eval $(cat rlz_cmd_exec)
         echo "completed sending release metadata"
+
     - name: Fail build if rearm status is rejected
       shell: bash
       run: |
