@@ -124,7 +124,7 @@ runs:
     - id: cosign-sign
       name: Sign with cosign
       shell: bash
-      run: cosign sign -y ${{inputs.image_full_name}}@${{inputs.image_digest}}
+      run: cosign sign -y --output-payload deliverable-cosign.sigpl --output-signature deliverable-cosign.sig --output-certificate deliverable-cosign.cert ${{inputs.image_full_name}}@${{inputs.image_digest}}
     - name: Set sce data
       shell: bash
       if: ${{ inputs.send_sce_data == 'true' }}
@@ -171,7 +171,7 @@ runs:
           docker run --rm -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen@sha256:a586408a729ec186e747d54415a787c095b2ff19640f29c0d1788ec4f9fea482 /app/docker-${{inputs.rearm_short_version}}.tar -t docker -o /app/docker.cdx.bom.json
           ls
           du -h ./docker.cdx.bom.json
-          echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
+          echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"},{\"type\": \"SIGNED_PAYLOAD\",\"filePath\": \"./deliverable-cosign.sigpl\"},{\"type\": \"SIGNATURE\",\"filePath\": \"./deliverable-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./deliverable-cosign.cert\"}]' " >> rearm_command
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
           -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
