@@ -124,7 +124,9 @@ runs:
     - id: cosign-sign
       name: Sign with cosign
       shell: bash
-      run: cosign sign -y --output-payload deliverable-cosign.sigpl --output-signature deliverable-cosign.sig --output-certificate deliverable-cosign.cert ${{inputs.image_full_name}}@${{inputs.image_digest}}
+      run: |
+        cd ${{ inputs.path }}
+        cosign sign -y --output-payload deliverable-cosign.sigpl --output-signature deliverable-cosign.sig --output-certificate deliverable-cosign.cert ${{inputs.image_full_name}}@${{inputs.image_digest}}
     - name: Set sce data
       shell: bash
       if: ${{ inputs.send_sce_data == 'true' }}
