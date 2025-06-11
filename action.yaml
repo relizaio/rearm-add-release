@@ -172,7 +172,6 @@ runs:
             cosign sign-blob -y --output-signature fs-bom-cosign.sig --output-certificate fs-bom-cosign.cert ./fs.cdx.bom.json
             echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./fs-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./fs-bom-cosign.cert\"}]}]' " >> rearm_command
           else
-          then
             echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
           fi
         fi
