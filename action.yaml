@@ -71,6 +71,10 @@ inputs:
   last_commit: 
     description: "Last registered commit"
     required: false
+  enable_public_cosign_sigstore:
+    required: false
+    default: 'false'
+    description: "Sign deliverables and SBOMs using public sigstore via cosign"
 
 runs:
   using: "composite"
@@ -119,9 +123,11 @@ runs:
       shell: bash
       run: npm install -g @cyclonedx/cdxgen@11.3.2
     - id: install-cosign
+      if: ${{ inputs.enable_public_cosign_sigstore == 'true' }}
       name: Install Cosign
       uses: sigstore/cosign-installer@v3.8.2
     - id: cosign-sign
+      if: ${{ inputs.enable_public_cosign_sigstore == 'true' }}
       name: Sign with cosign
       shell: bash
       run: |
@@ -161,8 +167,14 @@ runs:
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} != 'none' ]]
         then
           du -h ./fs.cdx.bom.json
-          cosign sign-blob -y --output-signature fs-bom-cosign.sig --output-certificate fs-bom-cosign.cert ./fs.cdx.bom.json
-          echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./fs-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./fs-bom-cosign.cert\"}]}]' " >> rearm_command
+          if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
+          then
+            cosign sign-blob -y --output-signature fs-bom-cosign.sig --output-certificate fs-bom-cosign.cert ./fs.cdx.bom.json
+            echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./fs-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./fs-bom-cosign.cert\"}]}]' " >> rearm_command
+          else
+          then
+            echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
+          fi
         fi
         
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.deliverable_type}} == 'CONTAINER' ]]
@@ -172,8 +184,13 @@ runs:
           cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
           docker run --rm -e FETCH_LICENSE=true -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.2.7@sha256:a586408a729ec186e747d54415a787c095b2ff19640f29c0d1788ec4f9fea482 /app/docker-${{inputs.rearm_short_version}}.tar -t docker -o /app/docker.cdx.bom.json
           du -h ./docker.cdx.bom.json
-          cosign sign-blob -y --output-signature docker-cdx-bom-cosign.sig --output-certificate docker-cdx-bom-cosign.cert ./docker.cdx.bom.json
-          echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./docker-cdx-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./docker-cdx-bom-cosign.cert\"}]},{\"type\": \"SIGNED_PAYLOAD\",\"filePath\": \"./deliverable-cosign.sigpl\"},{\"type\": \"SIGNATURE\",\"filePath\": \"./deliverable-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./deliverable-cosign.cert\"}]' " >> rearm_command
+          if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
+          then
+            cosign sign-blob -y --output-signature docker-cdx-bom-cosign.sig --output-certificate docker-cdx-bom-cosign.cert ./docker.cdx.bom.json
+            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./docker-cdx-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./docker-cdx-bom-cosign.cert\"}]},{\"type\": \"SIGNED_PAYLOAD\",\"filePath\": \"./deliverable-cosign.sigpl\"},{\"type\": \"SIGNATURE\",\"filePath\": \"./deliverable-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./deliverable-cosign.cert\"}]' " >> rearm_command
+          else
+            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
+          fi
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
           -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
