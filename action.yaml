@@ -181,7 +181,7 @@ runs:
           # export FETCH_LICENSE=true
           # export CDXGEN_DEBUG_MODE=debug
           # cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
-          docker run --rm -e FETCH_LICENSE=true -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.3.2@sha256:94b207610e0906d060e2921e525f8d6771c182fc93528761ae5f44d365eeff7c /app/docker-${{inputs.rearm_short_version}}.tar -t docker -o /app/docker.cdx.bom.json
+          docker run --rm -e FETCH_LICENSE=true -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.2.7@sha256:a586408a729ec186e747d54415a787c095b2ff19640f29c0d1788ec4f9fea482 /app/docker-${{inputs.rearm_short_version}}.tar -t docker -o /app/docker.cdx.bom.json
           du -h ./docker.cdx.bom.json
           if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
           then
