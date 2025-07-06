@@ -189,7 +189,7 @@ runs:
           # cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.json
           docker run --rm -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.2.7@sha256:a586408a729ec186e747d54415a787c095b2ff19640f29c0d1788ec4f9fea482 /app/docker-${{inputs.rearm_short_version}}.tar -t docker -o /app/docker.cdx.bom.json
           du -h ./docker.cdx.bom.json
-          rearm bom fixpurl -f ./docker.cdx.bom.json -o ./docker.cdx.bom.json --newpurl "${purl}"
+          rearm bomutils fixpurl -f ./docker.cdx.bom.json -o ./docker.cdx.bom.json --newpurl "${purl}"
           if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
           then
             cosign sign-blob -y --output-signature docker-cdx-bom-cosign.sig --output-certificate docker-cdx-bom-cosign.cert ./docker.cdx.bom.json
