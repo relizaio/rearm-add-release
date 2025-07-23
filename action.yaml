@@ -237,7 +237,7 @@ runs:
         # Conditionally finalize release
         if [[ "${{ inputs.finalize_release }}" == 'true' && -n "$release_uuid" ]]; then
           echo "Finalizing release with UUID: $release_uuid"
-          releasefinalizer --releaseid $release_uuid -u ${{ inputs.rearm_api_url }} -i ${{ inputs.rearm_api_id }} -k ${{ inputs.rearm_api_key }}
+          rearm releasefinalizer --releaseid $release_uuid -u ${{ inputs.rearm_api_url }} -i ${{ inputs.rearm_api_id }} -k ${{ inputs.rearm_api_key }}
         else
           echo "Skipping release finalization."
         fi
