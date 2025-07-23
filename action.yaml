@@ -60,6 +60,10 @@ inputs:
     description: "Host for image registry"
     default: null
     required: false
+  finalize_release:
+    description: "Finalize the release after adding it (true/false)"
+    required: false
+    default: 'false'
   path:
     description: "Path to the relative to root of the repo (default is '.')"
     required: false
@@ -222,7 +226,21 @@ runs:
         cat rearm_command
         # send data
         echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
-        eval $(cat rlz_cmd_exec)
+        # Run rearm addrelease and capture output
+        rearm_output=$(eval $(cat rlz_cmd_exec))
+        echo "$rearm_output"
+
+        # Extract UUID from JSON output using jq
+        release_uuid=$(echo "$rearm_output" | jq -r '.data.addReleaseProgrammatic.uuid // empty')
+        echo "Extracted release UUID: $release_uuid"
+
+        # Conditionally finalize release
+        if [[ "${{ inputs.finalize_release }}" == 'true' && -n "$release_uuid" ]]; then
+          echo "Finalizing release with UUID: $release_uuid"
+          releasefinalizer --releaseid $release_uuid -u ${{ inputs.rearm_api_url }} -i ${{ inputs.rearm_api_id }} -k ${{ inputs.rearm_api_key }}
+        else
+          echo "Skipping release finalization."
+        fi
         echo "completed sending release metadata"
 
     - name: Fail build if rearm status is rejected

@@ -38,5 +38,5 @@ The actions supports the following inputs:
 - `registry_username`: Username for the image registry. (Optional - needed for sbom generation)
 - `registry_password`: Password for the image registry. (Optional - needed for sbom generation)
 - `registry_host`: Image registry host. (Optional - needed for sbom generation)
-- `path`: Path to the relative to root of the repo (default is '.').
- (Optional - needed for sbom generation)
+- `path`: Path to the relative to root of the repo (default is '.'). (Optional - needed for sbom generation)
+- `finalize_release`: Finalize the release after adding it (`true`/`false`). Default is `false`. (Optional)
