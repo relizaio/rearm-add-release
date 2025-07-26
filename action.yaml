@@ -148,6 +148,8 @@ runs:
         elif [ ! -z ${{inputs.commit_list}} ]
         then
           echo -n "--commits ${{inputs.commit_list}} " >> rearm_command
+        else
+          echo -n "--commits $(git log -1 --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
         fi
         echo -n "--commit ${{github.sha}} --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
     - name: Submit metadata to Rearm
