@@ -122,7 +122,7 @@ runs:
         docker pull ${{inputs.image_full_name}}@${{inputs.image_digest}}
         docker save -o docker-${{inputs.rearm_short_version}}.tar ${{inputs.image_full_name}}@${{inputs.image_digest}} 
     - id: install-cdxgen
-      if: ${{ inputs.enable_sbom == 'true' }}
+      if: ${{ inputs.enable_sbom == 'true' && inputs.source_code_sbom_type != 'none' && inputs.source_code_sbom_type != 'custom' }}
       name: Install cdxgen cli
       shell: bash
       run: npm install -g @cyclonedx/cdxgen@11.3.2
@@ -167,7 +167,7 @@ runs:
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'npm' ]]
         then
           npm install --global @cyclonedx/cyclonedx-npm@4.0.0
-          npm install
+          npm ci
           cyclonedx-npm > fs.cdx.bom.json
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'helm' ]]
         then
@@ -177,8 +177,9 @@ runs:
           cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -o fs.cdx.bom.json
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'custom' ]]
         then
-          docker build -t sbom-container -f Dockerfile.sbom .
-          docker run --name sbom-container --rm --entrypoint sleep sbom-container 80
+          docker build -t sbom-container -f Dockerfile.sbom --build-arg VERSION="${{inputs.rearm_full_version}}" .
+          docker run -d --name sbom-container --rm --entrypoint sleep sbom-container 60
+          sleep 3
           docker cp sbom-container:/sbom/sbom.json ./fs.cdx.bom.json
         fi
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} != 'none' ]]
