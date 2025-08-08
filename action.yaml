@@ -49,7 +49,7 @@ inputs:
   source_code_sbom_type:
     required: false
     default: 'none'
-    description: "Generates SBOM based on source code analysis, possible values: npm, other, none"
+    description: "Generates SBOM based on source code analysis, possible values: npm, helm, custom, other, none"
   registry_username:
     description: "Username for image registry"
     required: false
@@ -175,6 +175,11 @@ runs:
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'other' ]]
         then      
           cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -o fs.cdx.bom.json
+        elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'custom' ]]
+        then
+          docker build -t sbom-container -f Dockerfile.sbom .
+          docker run --name sbom-container --rm --entrypoint sleep sbom-container 80
+          docker cp sbom-container:/sbom/sbom.json ./fs.cdx.bom.json
         fi
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} != 'none' ]]
         then
