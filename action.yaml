@@ -269,18 +269,18 @@ runs:
         fi
         echo -n "--datestart ${{inputs.rearm_build_start}} " >> rearm_command
         echo -n "--dateend $(date -Iseconds) " >> rearm_command
+        echo -n "2>&1" >> rearm_command
         # debug
         cat rearm_command
         # send data
-        rearm addrelease --debug=true $(cat rearm_command) 2>&1
-        #echo rearm addrelease --debug=true $(cat rearm_command) 2>&1 > rlz_cmd_exec
+        echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
         # Run rearm addrelease and capture output
-        # rearm_output=$(eval $(cat rlz_cmd_exec))
-        # echo "$rearm_output"
-        exit 0
+        rearm_output=$(eval $(cat rlz_cmd_exec))
+        echo "$rearm_output"
+
         # Extract UUID from JSON output using jq
-        # release_uuid=$(echo "$rearm_output" | jq -r '.data.addReleaseProgrammatic.uuid // empty')
-        # echo "Extracted release UUID: $release_uuid"
+        release_uuid=$(echo "$rearm_output" | jq -r '.data.addReleaseProgrammatic.uuid // empty')
+        echo "Extracted release UUID: $release_uuid"
 
         # Conditionally finalize release
         if [[ "${{ inputs.finalize_release }}" == 'true' && -n "$release_uuid" ]]; then
