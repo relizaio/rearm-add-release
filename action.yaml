@@ -272,7 +272,7 @@ runs:
         # debug
         cat rearm_command
         # send data
-        echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
+        echo rearm addrelease --debug=true $(cat rearm_command) 2>&1 > rlz_cmd_exec
         # Run rearm addrelease and capture output
         rearm_output=$(eval $(cat rlz_cmd_exec))
         echo "$rearm_output"
