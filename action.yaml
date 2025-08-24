@@ -160,14 +160,14 @@ runs:
         fi
         echo -n "--commit ${{github.sha}} --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
       with:
         languages: ${{ inputs.codeql_language }}
         source-root: ${{ inputs.path }}
         queries: security-and-quality
     - name: Run CodeQL
       if: ${{ inputs.enable_codeql == 'true' }}
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
       with:
         upload: false
         output: ${{ inputs.path }}/codeql-results
