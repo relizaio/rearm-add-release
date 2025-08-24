@@ -173,6 +173,7 @@ runs:
         output: ${{ inputs.path }}/codeql-results
     - name: Verify CodeQL output present
       if: ${{ inputs.enable_codeql == 'true' }}
+      shell: bash
       run: |
         du -h ${{ inputs.path }}/codeql-results/${{inputs.codeql_language}}.sarif
     - name: Submit metadata to Rearm
