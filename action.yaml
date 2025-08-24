@@ -79,7 +79,14 @@ inputs:
     required: false
     default: 'false'
     description: "Sign deliverables and SBOMs using public sigstore via cosign"
-
+  enable_codeql:
+    required: false
+    default: 'false'
+    description: "Enable CodeQL analysis"
+  codeql_language:
+    required: false
+    default: 'none'
+    description: "Language to analyze with CodeQL"
 runs:
   using: "composite"
   steps:
@@ -152,6 +159,22 @@ runs:
           echo -n "--commits $(git log -1 --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
         fi
         echo -n "--commit ${{github.sha}} --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ inputs.codeql_language }}
+        source-root: ${{ inputs.path }}
+        queries: security-and-quality
+    - name: Run CodeQL
+      if: ${{ inputs.enable_codeql == 'true' }}
+      uses: github/codeql-action/analyze@v3
+      with:
+        upload: false
+        output: ${{ inputs.path }}/codeql-results
+    - name: Verify CodeQL output present
+      if: ${{ inputs.enable_codeql == 'true' }}
+      run: |
+        du -h ${{ inputs.path }}/codeql-results/${{inputs.codeql_language}}.sarif
     - name: Submit metadata to Rearm
       shell: bash
       run: |
