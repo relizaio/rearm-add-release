@@ -269,20 +269,19 @@ runs:
         fi
         echo -n "--datestart ${{inputs.rearm_build_start}} " >> rearm_command
         echo -n "--dateend $(date -Iseconds) " >> rearm_command
-        echo -n "2>&1" >> rearm_command
         # debug
         cat rearm_command
         # send data
         echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
         # Run rearm addrelease and capture output
-        set +e
-        rearm_output=$(eval $(cat rlz_cmd_exec))
-        exit_code=$?
-        echo "$rearm_output"
-        if [ $exit_code -ne 0 ]; then
-          exit 1
+
+        if rearm_output=$(eval $(cat rlz_cmd_exec) 2>&1); then
+          echo "Success: $rearm_output"
+        else
+          exit_code=$?
+          echo "Error (exit code $exit_code): $rearm_output"
+          exit $exit_code
         fi
-        set -e
 
         # Extract UUID from JSON output using jq
         release_uuid=$(echo "$rearm_output" | jq -r '.data.addReleaseProgrammatic.uuid // empty')
