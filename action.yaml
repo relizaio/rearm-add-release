@@ -164,6 +164,9 @@ runs:
       with:
         languages: ${{ inputs.codeql_language }}
         source-root: ${{ inputs.path }}
+    - name: Autobuild
+      if: ${{ inputs.enable_codeql == 'true' && inputs.source_code_sbom_type != 'npm'}}
+      uses: github/codeql-action/autobuild@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
     - name: Run CodeQL
       if: ${{ inputs.enable_codeql == 'true' }}
       uses: github/codeql-action/analyze@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
