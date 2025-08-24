@@ -89,8 +89,8 @@ inputs:
     description: "Language to analyze with CodeQL"
   codeql_queries:
     required: false
-    default: 'security-only'
-    description: "CodeQL Queries Type (security-only | security-and-quality | security-extended | default | all) and some language specific options, see CodeQL documentation"
+    default: 'default'
+    description: "CodeQL Queries Type (default | security-extended | security-and-quality)"
 runs:
   using: "composite"
   steps:
