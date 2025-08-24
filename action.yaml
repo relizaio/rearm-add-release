@@ -211,9 +211,19 @@ runs:
           if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
           then
             cosign sign-blob -y --output-signature fs-bom-cosign.sig --output-certificate fs-bom-cosign.cert ./fs.cdx.bom.json
-            echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./fs-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./fs-bom-cosign.cert\"}]}]' " >> rearm_command
+            if [[ ${{ inputs.enable_codeql }} == 'true' ]]
+            then
+              echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./fs-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./fs-bom-cosign.cert\"}]},{\"type\": \"SARIF\",\"filePath\": \"${{ inputs.path }}/codeql-results/${{inputs.codeql_language}}.sarif\"}]' " >> rearm_command
+            else
+              echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./fs-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./fs-bom-cosign.cert\"}]}]' " >> rearm_command
+            fi
           else
-            echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
+            if [[ ${{ inputs.enable_codeql }} == 'true' ]]
+            then
+              echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"},{\"type\": \"SARIF\",\"filePath\": \"${{ inputs.path }}/codeql-results/${{inputs.codeql_language}}.sarif\"}]' " >> rearm_command
+            else
+              echo -n "--scearts '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./fs.cdx.bom.json\"}]' " >> rearm_command
+            fi
           fi
         fi
         
