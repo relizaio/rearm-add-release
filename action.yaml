@@ -49,7 +49,7 @@ inputs:
   source_code_sbom_type:
     required: false
     default: 'none'
-    description: "Generates SBOM based on source code analysis, possible values: npm, helm, custom, other, none"
+    description: "Generates SBOM based on source code analysis, possible values: npm, helm, custom, other, none. Use 'custom' to follow Dockerfile.sbom with expected output in /sbom/sbom.json"
   registry_username:
     description: "Username for image registry"
     required: false
@@ -86,7 +86,7 @@ inputs:
   codeql_language:
     required: false
     default: 'none'
-    description: "Language to analyze with CodeQL"
+    description: "Language to analyze with CodeQL, use 'custom' to follow Dockerfile.sarif with expected output in /sarif/results.sarif"
 runs:
   using: "composite"
   steps:
@@ -160,15 +160,22 @@ runs:
         fi
         echo -n "--commit ${{github.sha}} --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
     - name: Initialize CodeQL
+      if: ${{ inputs.enable_codeql == 'true' && inputs.codeql_language != 'custom'}}
       uses: github/codeql-action/init@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
       with:
         languages: ${{ inputs.codeql_language }}
         source-root: ${{ inputs.path }}
-    - name: Autobuild
-      if: ${{ inputs.enable_codeql == 'true' && inputs.source_code_sbom_type != 'npm'}}
-      uses: github/codeql-action/autobuild@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
+    - name: Run Containerized SAST
+      if: ${{ inputs.enable_codeql == 'true' && inputs.codeql_language == 'custom'}}
+      shell: bash
+      run: |
+        mkdir codeql-results
+        docker build -t sarif-container -f Dockerfile.sarif .
+        docker run -d --name sarif-container --rm --entrypoint sleep sarif-container 60
+        sleep 3
+        docker cp sarif-container:/sarif/results.sarif ${{ inputs.path }}/codeql-results/${{inputs.codeql_language}}.sarif
     - name: Run CodeQL
-      if: ${{ inputs.enable_codeql == 'true' }}
+      if: ${{ inputs.enable_codeql == 'true' && inputs.codeql_language != 'custom'}}
       uses: github/codeql-action/analyze@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
       with:
         upload: false
