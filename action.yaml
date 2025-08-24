@@ -87,10 +87,6 @@ inputs:
     required: false
     default: 'none'
     description: "Language to analyze with CodeQL"
-  codeql_queries:
-    required: false
-    default: 'default'
-    description: "CodeQL Queries Type (default | security-extended | security-and-quality)"
 runs:
   using: "composite"
   steps:
@@ -168,7 +164,6 @@ runs:
       with:
         languages: ${{ inputs.codeql_language }}
         source-root: ${{ inputs.path }}
-        queries: ${{ inputs.codeql_queries }}
     - name: Run CodeQL
       if: ${{ inputs.enable_codeql == 'true' }}
       uses: github/codeql-action/analyze@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
