@@ -171,7 +171,6 @@ runs:
       run: |
         cd ${{ inputs.path }}
         mkdir codeql-results
-        ls
         docker build -t sarif-container -f Dockerfile.sarif .
         docker run -d --name sarif-container --rm --entrypoint sleep sarif-container 60
         sleep 3
