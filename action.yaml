@@ -151,14 +151,14 @@ runs:
         cd ${{ inputs.path }}
         if [ ! -z "${{inputs.last_commit}}" ] && [ "null" != "${{inputs.last_commit}}" ]
         then
-          echo -n "--commits $(git log ${{inputs.last_commit}}..${{github.sha}} --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
+          echo -n "--commits $(git log ${{inputs.last_commit}}..$(git log -1 --pretty='%H') --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
         elif [ ! -z ${{inputs.commit_list}} ]
         then
           echo -n "--commits ${{inputs.commit_list}} " >> rearm_command
         else
           echo -n "--commits $(git log -1 --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
         fi
-        echo -n "--commit ${{github.sha}} --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
+        echo -n "--commit $(git log -1 --pretty='%H') --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
     - name: Initialize CodeQL
       if: ${{ inputs.enable_codeql == 'true' && inputs.codeql_language != 'custom'}}
       uses: github/codeql-action/init@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
