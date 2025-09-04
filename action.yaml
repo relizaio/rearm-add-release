@@ -149,6 +149,7 @@ runs:
       if: ${{ inputs.send_sce_data == 'true' }}
       run: |
         cd ${{ inputs.path }}
+        git pull
         if [ ! -z "${{inputs.last_commit}}" ] && [ "null" != "${{inputs.last_commit}}" ]
         then
           echo -n "--commits $(git log ${{inputs.last_commit}}..$(git log -1 --pretty='%H') --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
