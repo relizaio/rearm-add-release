@@ -132,7 +132,7 @@ runs:
       if: ${{ inputs.enable_sbom == 'true' && inputs.source_code_sbom_type != 'none' && inputs.source_code_sbom_type != 'custom' }}
       name: Install cdxgen cli
       shell: bash
-      run: npm install -g @cyclonedx/cdxgen@11.3.2
+      run: npm install -g @cyclonedx/cdxgen@11.7.0
     - id: install-cosign
       if: ${{ inputs.enable_public_cosign_sigstore == 'true' }}
       name: Install Cosign
@@ -206,10 +206,10 @@ runs:
           cyclonedx-npm --flatten-components > fs.cdx.bom.json
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'helm' ]]
         then
-          cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -t helm -o fs.cdx.bom.json
+          cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" --lifecyle build -t helm -o fs.cdx.bom.json
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'other' ]]
         then      
-          cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" -o fs.cdx.bom.json
+          cdxgen ./ --project-version "${{ inputs.rearm_full_version }}" --lifecycle build -o fs.cdx.bom.json
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'custom' ]]
         then
           docker build -t sbom-container -f Dockerfile.sbom --build-arg VERSION="${{inputs.rearm_full_version}}" .
@@ -246,10 +246,10 @@ runs:
         
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.deliverable_type}} == 'CONTAINER' ]]
         then
-          # export FETCH_LICENSE=true
+          export FETCH_LICENSE=true
           # export CDXGEN_DEBUG_MODE=debug
-          # cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.raw.json
-          docker run --rm -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.2.7@sha256:a586408a729ec186e747d54415a787c095b2ff19640f29c0d1788ec4f9fea482 /app/docker-${{inputs.rearm_short_version}}.tar -t docker -o /app/docker.cdx.bom.raw.json
+          cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --lifecycle build --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.raw.json
+          # docker run --rm -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.2.7@sha256:a586408a729ec186e747d54415a787c095b2ff19640f29c0d1788ec4f9fea482 /app/docker-${{inputs.rearm_short_version}}.tar -t docker --lifecycle build -o /app/docker.cdx.bom.raw.json
           du -h ./docker.cdx.bom.raw.json
           rearm bomutils fixpurl -f ./docker.cdx.bom.raw.json -o ./docker.cdx.bom.json --newpurl "${purl}"
           if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
