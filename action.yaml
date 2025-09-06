@@ -253,6 +253,7 @@ runs:
         then
           # export FETCH_LICENSE=true
           # export CDXGEN_DEBUG_MODE=debug
+          pip install blint==2.4.1
           cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --lifecycle build --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.raw.json
           # docker run --rm -u root -e FETCH_LICENSE=true -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.7.0@sha256:f33f2a067a419d599eb31a0dd007bc5d40eea7e1da64d9316024f1083fec16fa /app/docker-${{inputs.rearm_short_version}}.tar -t docker --lifecycle build -o /app/docker.cdx.bom.raw.json
           # syft ${{inputs.image_full_name}}@${{inputs.image_digest}} -o cyclonedx-json > ./docker.cdx.bom.raw.json
