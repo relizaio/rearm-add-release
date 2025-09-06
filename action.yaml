@@ -127,7 +127,7 @@ runs:
       run: |
         cd ${{ inputs.path }}
         docker pull ${{inputs.image_full_name}}@${{inputs.image_digest}}
-        # docker save -o docker-${{inputs.rearm_short_version}}.tar ${{inputs.image_full_name}}@${{inputs.image_digest}} 
+        docker save -o docker-${{inputs.rearm_short_version}}.tar ${{inputs.image_full_name}}@${{inputs.image_digest}} 
     - id: install-cdxgen
       if: ${{ inputs.enable_sbom == 'true' && inputs.source_code_sbom_type != 'none' && inputs.source_code_sbom_type != 'custom' }}
       name: Install cdxgen cli
@@ -187,11 +187,11 @@ runs:
       shell: bash
       run: |
         du -h ${{ inputs.path }}/codeql-results/${{inputs.codeql_language}}.sarif
-    - name: Get Syft
-      if: ${{ inputs.enable_sbom == 'true' && inputs.deliverable_type == 'CONTAINER' }}
-      uses: anchore/sbom-action/download-syft@da167eac915b4e86f08b264dbdbc867b61be6f0c # v0.20.5
-      with:
-        syft-version: v1.32.0
+    #- name: Get Syft
+    #  if: ${{ inputs.enable_sbom == 'true' && inputs.deliverable_type == 'CONTAINER' }}
+    #  uses: anchore/sbom-action/download-syft@da167eac915b4e86f08b264dbdbc867b61be6f0c # v0.20.5
+    #  with:
+    #    syft-version: v1.32.0
     - name: Submit metadata to Rearm
       shell: bash
       run: |
@@ -251,11 +251,11 @@ runs:
         
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.deliverable_type}} == 'CONTAINER' ]]
         then
-          # export FETCH_LICENSE=true
-          # export CDXGEN_DEBUG_MODE=debug
-          # cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --lifecycle build --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.raw.json
+          export FETCH_LICENSE=true
+          export CDXGEN_DEBUG_MODE=debug
+          cdxgen docker-${{inputs.rearm_short_version}}.tar -t docker --lifecycle post-build --project-version "${{ inputs.rearm_full_version }}" -o docker.cdx.bom.raw.json
           # docker run --rm -u root -v $(pwd):/app:rw ghcr.io/cyclonedx/cdxgen:v11.7.0@sha256:f33f2a067a419d599eb31a0dd007bc5d40eea7e1da64d9316024f1083fec16fa /app/docker-${{inputs.rearm_short_version}}.tar -t docker --lifecycle build -o /app/docker.cdx.bom.raw.json
-          syft ${{inputs.image_full_name}}@${{inputs.image_digest}} -o cyclonedx-json > ./docker.cdx.bom.raw.json
+          # syft ${{inputs.image_full_name}}@${{inputs.image_digest}} -o cyclonedx-json > ./docker.cdx.bom.raw.json
           du -h ./docker.cdx.bom.raw.json
           rearm bomutils fixpurl -f ./docker.cdx.bom.raw.json -o ./docker.cdx.bom.json --newpurl "${purl}"
           if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
