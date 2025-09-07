@@ -129,7 +129,7 @@ runs:
         docker pull ${{inputs.image_full_name}}@${{inputs.image_digest}}
         docker save -o docker-${{inputs.rearm_short_version}}.tar ${{inputs.image_full_name}}@${{inputs.image_digest}} 
     - id: install-cdxgen
-      if: ${{ inputs.enable_sbom == 'true' && (inputs.deliverable_type == 'CONTAINER' || (inputs.source_code_sbom_type != 'none' && inputs.source_code_sbom_type != 'custom')) }}
+      if: ${{ inputs.enable_sbom == 'true' }}
       name: Install cdxgen cli
       shell: bash
       run: npm install -g @cyclonedx/cdxgen@11.7.0
