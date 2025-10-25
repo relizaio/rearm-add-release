@@ -133,7 +133,7 @@ runs:
       if: ${{ inputs.enable_sbom == 'true' }}
       name: Install cdxgen cli
       shell: bash
-      run: npm install -g @cyclonedx/cdxgen@11.8.0 --ignore-scripts
+      run: npm install -g @cyclonedx/cdxgen@11.9.0 --ignore-scripts
     - id: install-cosign
       if: ${{ inputs.enable_public_cosign_sigstore == 'true' }}
       name: Install Cosign
@@ -208,7 +208,7 @@ runs:
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'npm' ]]
         then
           npm install --global @cyclonedx/cyclonedx-npm@4.0.0 --ignore-scripts
-          npm ci --ignore-scripts
+          npm ci
           cyclonedx-npm --flatten-components > fs.cdx.bom.json
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'helm' ]]
         then
@@ -269,26 +269,26 @@ runs:
             echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> /tmp/reliza/rearm_command
           fi
         fi
-        echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \"" >> /tmp/reliza/rearm_command
-        echo -n "-i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \"" >> /tmp/reliza/rearm_command
-        echo -n "-v \"${{ inputs.rearm_full_version }}\" \"" >> /tmp/reliza/rearm_command
-        echo -n "--odelid ${{inputs.image_full_name}} \"" >> /tmp/reliza/rearm_command
-        echo -n "--odelbuildid github${{github.action}}${{github.sha}} \"" >> /tmp/reliza/rearm_command
-        echo -n "--odelbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} \"" >> /tmp/reliza/rearm_command
-        echo -n "--odelidentifiers \"PURL:${purl}\" \"" >> /tmp/reliza/rearm_command
-        echo -n '--odelcimeta \"GitHub Actions\" \"' >> /tmp/reliza/rearm_command
-        echo -n "--odeltype ${{inputs.deliverable_type}} \"" >> /tmp/reliza/rearm_command
+        echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
+          -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
+          -v \"${{ inputs.rearm_full_version }}\" " >> /tmp/reliza/rearm_command
+        echo -n "--odelid ${{inputs.image_full_name}} " >> /tmp/reliza/rearm_command
+        echo -n "--odelbuildid github${{github.action}}${{github.sha}} " >> /tmp/reliza/rearm_command
+        echo -n "--odelbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> /tmp/reliza/rearm_command
+        echo -n "--odelidentifiers \"PURL:${purl}\" " >> /tmp/reliza/rearm_command
+        echo -n '--odelcimeta "GitHub Actions" ' >> /tmp/reliza/rearm_command
+        echo -n "--odeltype ${{inputs.deliverable_type}} " >> /tmp/reliza/rearm_command
 
         if [[ ${{inputs.image_digest}} != "" ]]
         then
-          echo -n "--odeldigests ${{inputs.image_digest}} \"" >> /tmp/reliza/rearm_command
+          echo -n "--odeldigests ${{inputs.image_digest}} " >> /tmp/reliza/rearm_command
         fi
         if [ ! -z ${{inputs.rearm_component_id}} ]
         then
-          echo -n "--component ${{inputs.rearm_component_id}} \"" >> /tmp/reliza/rearm_command
+          echo -n "--component ${{inputs.rearm_component_id}} " >> /tmp/reliza/rearm_command
         fi
-        echo -n "--datestart ${{inputs.rearm_build_start}} \"" >> /tmp/reliza/rearm_command
-        echo -n "--dateend $(date -Iseconds) \"" >> /tmp/reliza/rearm_command
+        echo -n "--datestart ${{inputs.rearm_build_start}} " >> /tmp/reliza/rearm_command
+        echo -n "--dateend $(date -Iseconds) " >> /tmp/reliza/rearm_command
         # debug
         cat /tmp/reliza/rearm_command
         # send data
