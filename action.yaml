@@ -97,9 +97,10 @@ runs:
     - name: Instantiate Rearm status
       shell: bash
       run: |
+        mkdir -p /tmp/reliza
         cd ${{ inputs.path }}
-        echo "" > rearm_command
-        echo -n "--lifecycle ${{inputs.rearm_build_status}} " >> rearm_command
+        echo "" > /tmp/reliza/rearm_command
+        echo -n "--lifecycle ${{inputs.rearm_build_status}} " >> /tmp/reliza/rearm_command
 
     - id: setup-node-js
       if: ${{ inputs.enable_sbom == 'true' }}
@@ -132,7 +133,7 @@ runs:
       if: ${{ inputs.enable_sbom == 'true' }}
       name: Install cdxgen cli
       shell: bash
-      run: npm install -g @cyclonedx/cdxgen@11.7.0
+      run: npm install -g @cyclonedx/cdxgen@11.8.0 --ignore-scripts
     - id: install-cosign
       if: ${{ inputs.enable_public_cosign_sigstore == 'true' }}
       name: Install Cosign
@@ -152,14 +153,14 @@ runs:
         git pull
         if [ ! -z "${{inputs.last_commit}}" ] && [ "null" != "${{inputs.last_commit}}" ]
         then
-          echo -n "--commits $(git log ${{inputs.last_commit}}..$(git log -1 --pretty='%H') --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
+          echo -n "--commits $(git log ${{inputs.last_commit}}..$(git log -1 --pretty='%H') --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> /tmp/reliza/rearm_command
         elif [ ! -z ${{inputs.commit_list}} ]
         then
-          echo -n "--commits ${{inputs.commit_list}} " >> rearm_command
+          echo -n "--commits ${{inputs.commit_list}} " >> /tmp/reliza/rearm_command
         else
-          echo -n "--commits $(git log -1 --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> rearm_command
+          echo -n "--commits $(git log -1 --date=iso-strict --pretty='%H|||%ad|||%s|||%an|||%ae' -- ./ | base64 -w 0) "  >> /tmp/reliza/rearm_command
         fi
-        echo -n "--commit $(git log -1 --pretty='%H') --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> rearm_command
+        echo -n "--commit $(git log -1 --pretty='%H') --commitmessage \"$(git log -1 --pretty='%s')\" --date $(git log -1 --date=iso-strict --pretty='%ad') --vcstype git --vcsuri github.com/${{github.repository}} " >> /tmp/reliza/rearm_command
     - name: Initialize CodeQL
       if: ${{ inputs.enable_codeql == 'true' && inputs.codeql_language != 'custom'}}
       uses: github/codeql-action/init@e96e340c1e95e91449de06aabfa9525b7b98113f # CodeQL Bundle v2.22.4
@@ -206,8 +207,8 @@ runs:
         export FETCH_LICENSE=true
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'npm' ]]
         then
-          npm install --global @cyclonedx/cyclonedx-npm@4.0.0
-          npm ci
+          npm install --global @cyclonedx/cyclonedx-npm@4.0.0 --ignore-scripts
+          npm ci --ignore-scripts
           cyclonedx-npm --flatten-components > fs.cdx.bom.json
         elif [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.source_code_sbom_type}} == 'helm' ]]
         then
@@ -246,7 +247,7 @@ runs:
           
           scearts+=']'
           
-          echo -n "--scearts '${scearts}' " >> rearm_command
+          echo -n "--scearts '${scearts}' " >> /tmp/reliza/rearm_command
         fi
         
         if [[ ${{inputs.enable_sbom}} == 'true' && ${{inputs.deliverable_type}} == 'CONTAINER' ]]
@@ -263,38 +264,38 @@ runs:
           if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
           then
             cosign sign-blob -y --output-signature docker-cdx-bom-cosign.sig --output-certificate docker-cdx-bom-cosign.cert ./docker.cdx.bom.json
-            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./docker-cdx-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./docker-cdx-bom-cosign.cert\"}]},{\"type\": \"SIGNED_PAYLOAD\",\"filePath\": \"./deliverable-cosign.sigpl\"},{\"type\": \"SIGNATURE\",\"filePath\": \"./deliverable-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./deliverable-cosign.cert\"}]' " >> rearm_command
+            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./docker-cdx-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./docker-cdx-bom-cosign.cert\"}]},{\"type\": \"SIGNED_PAYLOAD\",\"filePath\": \"./deliverable-cosign.sigpl\"},{\"type\": \"SIGNATURE\",\"filePath\": \"./deliverable-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./deliverable-cosign.cert\"}]' " >> /tmp/reliza/rearm_command
           else
-            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> rearm_command
+            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> /tmp/reliza/rearm_command
           fi
         fi
-        echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
-          -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
-          -v \"${{ inputs.rearm_full_version }}\" " >> rearm_command
-        echo -n "--odelid ${{inputs.image_full_name}} " >> rearm_command
-        echo -n "--odelbuildid github${{github.action}}${{github.sha}} " >> rearm_command
-        echo -n "--odelbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} " >> rearm_command
-        echo -n "--odelidentifiers \"PURL:${purl}\" " >> rearm_command
-        echo -n '--odelcimeta "GitHub Actions" ' >> rearm_command
-        echo -n "--odeltype ${{inputs.deliverable_type}} " >> rearm_command
+        echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \"" >> /tmp/reliza/rearm_command
+        echo -n "-i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \"" >> /tmp/reliza/rearm_command
+        echo -n "-v \"${{ inputs.rearm_full_version }}\" \"" >> /tmp/reliza/rearm_command
+        echo -n "--odelid ${{inputs.image_full_name}} \"" >> /tmp/reliza/rearm_command
+        echo -n "--odelbuildid github${{github.action}}${{github.sha}} \"" >> /tmp/reliza/rearm_command
+        echo -n "--odelbuilduri https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} \"" >> /tmp/reliza/rearm_command
+        echo -n "--odelidentifiers \"PURL:${purl}\" \"" >> /tmp/reliza/rearm_command
+        echo -n '--odelcimeta \"GitHub Actions\" \"' >> /tmp/reliza/rearm_command
+        echo -n "--odeltype ${{inputs.deliverable_type}} \"" >> /tmp/reliza/rearm_command
 
         if [[ ${{inputs.image_digest}} != "" ]]
         then
-          echo -n "--odeldigests ${{inputs.image_digest}} " >> rearm_command
+          echo -n "--odeldigests ${{inputs.image_digest}} \"" >> /tmp/reliza/rearm_command
         fi
         if [ ! -z ${{inputs.rearm_component_id}} ]
         then
-          echo -n "--component ${{inputs.rearm_component_id}} " >> rearm_command
+          echo -n "--component ${{inputs.rearm_component_id}} \"" >> /tmp/reliza/rearm_command
         fi
-        echo -n "--datestart ${{inputs.rearm_build_start}} " >> rearm_command
-        echo -n "--dateend $(date -Iseconds) " >> rearm_command
+        echo -n "--datestart ${{inputs.rearm_build_start}} \"" >> /tmp/reliza/rearm_command
+        echo -n "--dateend $(date -Iseconds) \"" >> /tmp/reliza/rearm_command
         # debug
-        cat rearm_command
+        cat /tmp/reliza/rearm_command
         # send data
-        echo rearm addrelease $(cat rearm_command) > rlz_cmd_exec
+        echo rearm addrelease $(cat /tmp/reliza/rearm_command) > /tmp/reliza/rlz_cmd_exec
         # Run rearm addrelease and capture output
 
-        if rearm_output=$(eval $(cat rlz_cmd_exec) 2>&1); then
+        if rearm_output=$(eval $(cat /tmp/reliza/rlz_cmd_exec) 2>&1); then
           echo "Success: $rearm_output"
         else
           exit_code=$?
@@ -325,3 +326,7 @@ runs:
           echo "Failing build since Rearm build Lifecycle is rejected"
           exit 1
         fi
+post:
+  shell: bash
+  run: |
+    rm -rf /tmp/reliza/*
