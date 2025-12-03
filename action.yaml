@@ -242,7 +242,7 @@ runs:
           # Add CodeQL SARIF artifact if enabled
           if [[ ${{ inputs.enable_codeql }} == 'true' ]]
           then
-            scearts+=',{"type": "SARIF","filePath": "./codeql-results/${{inputs.codeql_language}}.sarif"}'
+            scearts+=',{"type": "CODE_SCANNING_RESULT","filePath": "./codeql-results/${{inputs.codeql_language}}.sarif"}'
           fi
           
           scearts+=']'
