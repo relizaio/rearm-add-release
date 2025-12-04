@@ -230,11 +230,38 @@ runs:
           # Build scearts JSON array
           scearts='[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./fs.cdx.bom.json"'
           
+          # Sign with ShiftLeftCyber if enabled
+          has_artifacts=false
+          if [[ ${{ inputs.enable_shiftleftcyber }} == 'true' ]]
+          then
+            mv ./fs.cdx.bom.json ./fs.cdx.bom.json.tmp
+            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/sbom/sign?pretty=false" \
+              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" \
+              --form 'sbom=@"./fs.cdx.bom.json.tmp"' \
+              --form 'key_id="${{ inputs.shiftleftcyber_pub_key_id }}"' > ./fs.cdx.bom.json
+            rm ./fs.cdx.bom.json.tmp
+
+            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/keys/public?key_id=${{ inputs.shiftleftcyber_pub_key_id }}&format=pem" \
+              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" > ./shiftleftcyber-public-key.pem
+            scearts+=', "artifacts": [{"type": "PUBLIC_KEY","filePath": "./shiftleftcyber-public-key.pem"}, "tags":[{"key":"io.reliza.signing_platform","value":"SHIFT_LEFT_CYBER"}, {"key":"io.reliza.shiftleftcyber.pub_key_id","value":"${{ inputs.shiftleftcyber_pub_key_id }"}]'
+            has_artifacts=true
+          fi
+
           # Add cosign artifacts if enabled
           if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
           then
             cosign sign-blob -y --output-signature fs-bom-cosign.sig --output-certificate fs-bom-cosign.cert ./fs.cdx.bom.json
-            scearts+=', "artifacts": [{"type": "SIGNATURE","filePath": "./fs-bom-cosign.sig"},{"type": "CERTIFICATE_X_509","filePath": "./fs-bom-cosign.cert"}]'
+            if [[ $has_artifacts == true ]]; then
+              scearts+=',{"type": "SIGNATURE","filePath": "./fs-bom-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./fs-bom-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
+            else
+              scearts+=', "artifacts": [{"type": "SIGNATURE","filePath": "./fs-bom-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./fs-bom-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
+              has_artifacts=true
+            fi
+          fi
+          
+          # Close artifacts array if it was opened
+          if [[ $has_artifacts == true ]]; then
+            scearts+=']'
           fi
           
           scearts+='}'
