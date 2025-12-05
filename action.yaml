@@ -197,6 +197,48 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.path }}
+        
+        # Function to sign SBOM and build artifacts JSON
+        # Usage: sign_sbom <bom_file> <output_prefix>
+        # Returns artifacts JSON fragment via SIGN_RESULT variable
+        sign_sbom() {
+          local bom_file="$1"
+          local prefix="$2"
+          local has_artifacts=false
+          SIGN_RESULT=""
+          
+          # Sign with ShiftLeftCyber if enabled
+          if [[ ${{ inputs.enable_shiftleftcyber }} == 'true' ]]; then
+            mv "${bom_file}" "${bom_file}.tmp"
+            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/sbom/sign?pretty=false" \
+              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" \
+              --form "sbom=@\"${bom_file}.tmp\"" \
+              --form 'key_id="${{ inputs.shiftleftcyber_pub_key_id }}"' > "${bom_file}"
+            rm "${bom_file}.tmp"
+
+            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/keys/public?key_id=${{ inputs.shiftleftcyber_pub_key_id }}&format=pem" \
+              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" > "./${prefix}-shiftleftcyber-public-key.pem"
+            SIGN_RESULT+=', "artifacts": [{"type": "PUBLIC_KEY","filePath": "./'"${prefix}"'-shiftleftcyber-public-key.pem"}, "tags":[{"key":"io.reliza.signing_platform","value":"SHIFT_LEFT_CYBER"}, {"key":"io.reliza.shiftleftcyber.pub_key_id","value":"${{ inputs.shiftleftcyber_pub_key_id }}"}]'
+            has_artifacts=true
+          fi
+
+          # Add cosign artifacts if enabled
+          if [[ ${{ inputs.enable_public_cosign_sigstore }} == 'true' ]]; then
+            cosign sign-blob -y --output-signature "./${prefix}-cosign.sig" --output-certificate "./${prefix}-cosign.cert" "${bom_file}"
+            if [[ $has_artifacts == true ]]; then
+              SIGN_RESULT+=',{"type": "SIGNATURE","filePath": "./'"${prefix}"'-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./'"${prefix}"'-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
+            else
+              SIGN_RESULT+=', "artifacts": [{"type": "SIGNATURE","filePath": "./'"${prefix}"'-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./'"${prefix}"'-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
+              has_artifacts=true
+            fi
+          fi
+          
+          # Close artifacts array if it was opened
+          if [[ $has_artifacts == true ]]; then
+            SIGN_RESULT+=']'
+          fi
+        }
+        
         # establish purl
         url4purl=oci://${{inputs.image_full_name}}:${{inputs.rearm_short_version}}
         docker pull registry.relizahub.com/library/url2purl-cli:25.07.0@sha256:05f849cfedbc31c6c8d11819e42efb4eb5e95198696978ca1ad84b010d52e952
@@ -227,44 +269,9 @@ runs:
         then
           du -h ./fs.cdx.bom.json
           
-          # Build scearts JSON array
-          scearts='[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./fs.cdx.bom.json"'
-          
-          # Sign with ShiftLeftCyber if enabled
-          has_artifacts=false
-          if [[ ${{ inputs.enable_shiftleftcyber }} == 'true' ]]
-          then
-            mv ./fs.cdx.bom.json ./fs.cdx.bom.json.tmp
-            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/sbom/sign?pretty=false" \
-              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" \
-              --form 'sbom=@"./fs.cdx.bom.json.tmp"' \
-              --form 'key_id="${{ inputs.shiftleftcyber_pub_key_id }}"' > ./fs.cdx.bom.json
-            rm ./fs.cdx.bom.json.tmp
-
-            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/keys/public?key_id=${{ inputs.shiftleftcyber_pub_key_id }}&format=pem" \
-              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" > ./shiftleftcyber-public-key.pem
-            scearts+=', "artifacts": [{"type": "PUBLIC_KEY","filePath": "./shiftleftcyber-public-key.pem"}, "tags":[{"key":"io.reliza.signing_platform","value":"SHIFT_LEFT_CYBER"}, {"key":"io.reliza.shiftleftcyber.pub_key_id","value":"${{ inputs.shiftleftcyber_pub_key_id }"}]'
-            has_artifacts=true
-          fi
-
-          # Add cosign artifacts if enabled
-          if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
-          then
-            cosign sign-blob -y --output-signature fs-bom-cosign.sig --output-certificate fs-bom-cosign.cert ./fs.cdx.bom.json
-            if [[ $has_artifacts == true ]]; then
-              scearts+=',{"type": "SIGNATURE","filePath": "./fs-bom-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./fs-bom-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
-            else
-              scearts+=', "artifacts": [{"type": "SIGNATURE","filePath": "./fs-bom-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./fs-bom-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
-              has_artifacts=true
-            fi
-          fi
-          
-          # Close artifacts array if it was opened
-          if [[ $has_artifacts == true ]]; then
-            scearts+=']'
-          fi
-          
-          scearts+='}'
+          # Sign SBOM and build scearts JSON array
+          sign_sbom "./fs.cdx.bom.json" "fs-bom"
+          scearts='[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./fs.cdx.bom.json"'"${SIGN_RESULT}"'}'
           
           # Add CodeQL SARIF artifact if enabled
           if [[ ${{ inputs.enable_codeql }} == 'true' ]]
@@ -288,13 +295,18 @@ runs:
           # syft ${{inputs.image_full_name}}@${{inputs.image_digest}} -o cyclonedx-json > ./docker.cdx.bom.raw.json
           du -h ./docker.cdx.bom.raw.json
           rearm bomutils fixpurl -f ./docker.cdx.bom.raw.json -o ./docker.cdx.bom.json --newpurl "${purl}"
-          if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]
-          then
-            cosign sign-blob -y --output-signature docker-cdx-bom-cosign.sig --output-certificate docker-cdx-bom-cosign.cert ./docker.cdx.bom.json
-            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\", \"artifacts\": [{\"type\": \"SIGNATURE\",\"filePath\": \"./docker-cdx-bom-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./docker-cdx-bom-cosign.cert\"}]},{\"type\": \"SIGNED_PAYLOAD\",\"filePath\": \"./deliverable-cosign.sigpl\"},{\"type\": \"SIGNATURE\",\"filePath\": \"./deliverable-cosign.sig\"},{\"type\": \"CERTIFICATE_X_509\",\"filePath\": \"./deliverable-cosign.cert\"}]' " >> /tmp/reliza/rearm_command
-          else
-            echo -n "--odelartsjson '[{\"bomFormat\": \"CYCLONEDX\",\"type\": \"BOM\",\"filePath\": \"./docker.cdx.bom.json\"}]' " >> /tmp/reliza/rearm_command
+          
+          # Sign deliverable SBOM
+          sign_sbom "./docker.cdx.bom.json" "docker-cdx-bom"
+          odelarts='[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./docker.cdx.bom.json"'"${SIGN_RESULT}"'}'
+          
+          # Add deliverable cosign artifacts if enabled
+          if [[ ${{ inputs.enable_public_cosign_sigstore}} == 'true' ]]; then
+            odelarts+=',{"type": "SIGNED_PAYLOAD","filePath": "./deliverable-cosign.sigpl", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "SIGNATURE","filePath": "./deliverable-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./deliverable-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
           fi
+          odelarts+=']'
+          
+          echo -n "--odelartsjson '${odelarts}' " >> /tmp/reliza/rearm_command
         fi
         echo -n "-b ${{github.ref_name}} -k ${{ inputs.rearm_api_key }} \
           -i ${{ inputs.rearm_api_id }} -u ${{ inputs.rearm_api_url }} \
