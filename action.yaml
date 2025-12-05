@@ -208,7 +208,7 @@ runs:
           SIGN_RESULT=""
           
           # Sign with ShiftLeftCyber if enabled
-          if [[ ${{ inputs.enable_shiftleftcyber }} == 'true' ]]; then
+          if [[ "${{ inputs.enable_shiftleftcyber }}" == 'true' ]]; then
             mv "${bom_file}" "${bom_file}.tmp"
             curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/sbom/sign?pretty=false" \
               --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" \
@@ -223,7 +223,7 @@ runs:
           fi
 
           # Add cosign artifacts if enabled
-          if [[ ${{ inputs.enable_public_cosign_sigstore }} == 'true' ]]; then
+          if [[ "${{ inputs.enable_public_cosign_sigstore }}" == 'true' ]]; then
             cosign sign-blob -y --output-signature "./${prefix}-cosign.sig" --output-certificate "./${prefix}-cosign.cert" "${bom_file}"
             if [[ $has_artifacts == true ]]; then
               SIGN_RESULT+=',{"type": "SIGNATURE","filePath": "./'"${prefix}"'-cosign.sig", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]},{"type": "CERTIFICATE_X_509","filePath": "./'"${prefix}"'-cosign.cert", "tags":[{"key":"io.reliza.signing_platform","value":"COSIGN"}]}'
