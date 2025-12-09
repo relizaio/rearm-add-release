@@ -87,6 +87,19 @@ inputs:
     required: false
     default: 'none'
     description: "Language to analyze with CodeQL, use 'custom' to follow Dockerfile.sarif with expected output in /sarif/results.sarif"
+  enable_shiftleftcyber:
+    required: false
+    default: 'false'
+    description: "Enable ShiftLeftCyber signing of SBOMs"
+  shiftleftcyber_pub_key_id:
+    required: false
+    description: "Public key id to sign with ShiftLeftCyber"
+  shiftleftcyber_host:
+    required: false
+    description: "ShiftLeftCyber host"
+  shiftleftcyber_key:
+    required: false
+    description: "ShiftLeftCyber API key"
 runs:
   using: "composite"
   steps:
