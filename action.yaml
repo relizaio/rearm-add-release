@@ -231,7 +231,7 @@ runs:
 
             curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/keys/public?key_id=${{ inputs.shiftleftcyber_pub_key_id }}&format=pem" \
               --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" > "./${prefix}-shiftleftcyber-public-key.pem"
-            SIGN_RESULT+=', "artifacts": [{"type": "PUBLIC_KEY","filePath": "./'"${prefix}"'-shiftleftcyber-public-key.pem"}, "tags":[{"key":"io.reliza.signing_platform","value":"SHIFT_LEFT_CYBER"}, {"key":"io.reliza.shiftleftcyber.pub_key_id","value":"${{ inputs.shiftleftcyber_pub_key_id }}"}]'
+            SIGN_RESULT+=', "artifacts": [{"type": "PUBLIC_KEY","filePath": "./'"${prefix}"'-shiftleftcyber-public-key.pem", "tags":[{"key":"io.reliza.signing_platform","value":"SHIFT_LEFT_CYBER"}, {"key":"io.reliza.shiftleftcyber.pub_key_id","value":"${{ inputs.shiftleftcyber_pub_key_id }}"}]}'
             has_artifacts=true
           fi
 
