@@ -87,19 +87,19 @@ inputs:
     required: false
     default: 'none'
     description: "Language to analyze with CodeQL, use 'custom' to follow Dockerfile.sarif with expected output in /sarif/results.sarif"
-  enable_shiftleftcyber:
+  enable_securesbom:
     required: false
     default: 'false'
-    description: "Enable ShiftLeftCyber signing of SBOMs"
-  shiftleftcyber_pub_key_id:
+    description: "Enable SecureSBOM signing of SBOMs by ShiftLeftCyber"
+  securesbom_pub_key_id:
     required: false
-    description: "Public key id to sign with ShiftLeftCyber"
-  shiftleftcyber_host:
+    description: "Public key id to sign with SecureSBOM by ShiftLeftCyber"
+  securesbom_host:
     required: false
-    description: "ShiftLeftCyber host"
-  shiftleftcyber_key:
+    description: "SecureSBOM (by ShiftLeftCyber) host"
+  securesbom_api_key:
     required: false
-    description: "ShiftLeftCyber API key"
+    description: "SecureSBOM (by ShiftLeftCyber) API key"
 runs:
   using: "composite"
   steps:
@@ -220,18 +220,18 @@ runs:
           local has_artifacts=false
           SIGN_RESULT=""
           
-          # Sign with ShiftLeftCyber if enabled
-          if [[ "${{ inputs.enable_shiftleftcyber }}" == 'true' ]]; then
+          # Sign with SecureSBOM by ShiftLeftCyber if enabled
+          if [[ "${{ inputs.enable_securesbom }}" == 'true' ]]; then
             mv "${bom_file}" "${bom_file}.tmp"
-            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/sbom/sign?pretty=false" \
-              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" \
+            curl --location "${{ inputs.securesbom_host }}/api/v1/sbom/sign?pretty=false" \
+              --header "x-api-key: ${{ inputs.securesbom_api_key }}" \
               --form "sbom=@\"${bom_file}.tmp\"" \
-              --form 'key_id="${{ inputs.shiftleftcyber_pub_key_id }}"' > "${bom_file}"
+              --form 'key_id="${{ inputs.securesbom_pub_key_id }}"' > "${bom_file}"
             rm "${bom_file}.tmp"
 
-            curl --location "${{ inputs.shiftleftcyber_host }}/api/v1/keys/public?key_id=${{ inputs.shiftleftcyber_pub_key_id }}&format=pem" \
-              --header "x-api-key: ${{ inputs.shiftleftcyber_key }}" > "./${prefix}-shiftleftcyber-public-key.pem"
-            SIGN_RESULT+=', "artifacts": [{"type": "PUBLIC_KEY","filePath": "./'"${prefix}"'-shiftleftcyber-public-key.pem", "tags":[{"key":"io.reliza.signing_platform","value":"SHIFT_LEFT_CYBER"}, {"key":"io.reliza.shiftleftcyber.pub_key_id","value":"${{ inputs.shiftleftcyber_pub_key_id }}"}]}'
+            curl --location "${{ inputs.securesbom_host }}/api/v1/keys/public?key_id=${{ inputs.securesbom_pub_key_id }}&format=pem" \
+              --header "x-api-key: ${{ inputs.securesbom_api_key }}" > "./${prefix}-securesbom-public-key.pem"
+            SIGN_RESULT+=', "artifacts": [{"type": "PUBLIC_KEY","filePath": "./'"${prefix}"'-securesbom-public-key.pem", "tags":[{"key":"io.reliza.signing_platform","value":"SECURESBOM"}, {"key":"io.reliza.securesbom.pub_key_id","value":"${{ inputs.securesbom_pub_key_id }}"}]}'
             has_artifacts=true
           fi
 
