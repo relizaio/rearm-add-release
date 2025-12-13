@@ -31,7 +31,7 @@ inputs:
   rearm_api_url:
     description: "Rearm Hub API URL"
     required: false
-    default: 'https://dev.rearmhq.com'
+    default: 'https://demo.rearmhq.com'
   deliverable_type:
     description: "Type of artifact created by this release [CONTAINER, FILE]"
     required: false
@@ -63,7 +63,7 @@ inputs:
   finalize_release:
     description: "Finalize the release after adding it (true/false)"
     required: false
-    default: 'false'
+    default: 'true'
   path:
     description: "Path to the relative to root of the repo (default is '.')"
     required: false
