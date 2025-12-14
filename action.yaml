@@ -285,7 +285,6 @@ runs:
           # Sign SBOM and build scearts JSON array
           sign_sbom "./fs.cdx.bom.json" "fs-bom"
           du -h ./fs.cdx.bom.json
-          cat ./fs.cdx.bom.json | grep signature
           scearts='[{"bomFormat": "CYCLONEDX","type": "BOM","filePath": "./fs.cdx.bom.json"'"${SIGN_RESULT}"'}'
           
           # Add CodeQL SARIF artifact if enabled
